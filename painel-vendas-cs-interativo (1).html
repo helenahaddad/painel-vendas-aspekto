@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Vendas — CS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  :root{
+    --bg:#0B0E13;
+    --card:#12161D;
+    --card-alt:#161B23;
+    --border:#232A35;
+    --text:#E9ECF1;
+    --text-soft:#8A93A3;
+    --blue:#4C8DFF;
+    --blue-soft:rgba(76,141,255,.14);
+    --green:#22C58B;
+    --green-soft:rgba(34,197,139,.14);
+    --red:#E5484D;
+    --red-soft:rgba(229,72,77,.14);
+    --orange:#F5A623;
+    --purple:#8B5CF6;
+    --teal:#2DD4C8;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 28px 80px;}
+
+  header{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding-bottom:24px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:24px;
+  }
+  .logo-mark{
+    width:36px;height:36px;border-radius:8px;
+    background:linear-gradient(135deg, var(--blue), var(--teal));
+    flex-shrink:0;
+  }
+  header .title{font-size:19px;font-weight:700;margin:0;letter-spacing:-.01em;}
+  header .subtitle{font-size:13px;color:var(--text-soft);margin-top:2px;}
+
+  /* Month tabs */
+  .month-tabs{display:flex;gap:8px;margin-bottom:28px;flex-wrap:wrap;}
+  .month-tab{
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:600;
+    padding:8px 16px;
+    border-radius:100px;
+    border:1px solid var(--border);
+    background:var(--card);
+    color:var(--text-soft);
+    cursor:pointer;
+  }
+  .month-tab:hover{border-color:var(--blue);color:var(--text);}
+  .month-tab.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+
+  .loading{color:var(--text-soft);font-size:14px;padding:40px 0;}
+
+  /* Stat cards (top strip) */
+  .stat-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(170px,1fr));
+    gap:14px;
+    margin-bottom:36px;
+  }
+  .stat-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    border-top:3px solid var(--accent, var(--blue));
+    padding:16px 18px 18px;
+  }
+  .stat-card .eyebrow{
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.04em;
+    color:var(--text-soft);
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  .stat-card .value{font-size:26px;font-weight:800;letter-spacing:-.01em;}
+  .stat-card .note{font-size:12px;color:var(--text-soft);margin-top:6px;line-height:1.4;}
+  .pill{
+    display:inline-flex;align-items:center;gap:4px;
+    font-size:12px;font-weight:700;
+    padding:2px 8px;border-radius:100px;
+    margin-top:6px;
+  }
+  .pill.up{background:var(--green-soft);color:var(--green);}
+  .pill.down{background:var(--red-soft);color:var(--red);}
+  .pill.flat{background:var(--card-alt);color:var(--text-soft);}
+
+  section{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:26px 28px;
+    margin-bottom:20px;
+  }
+  h2{font-size:16px;font-weight:700;margin:0 0 4px;letter-spacing:-.01em;}
+  .section-sub{font-size:13px;color:var(--text-soft);margin:0 0 22px;}
+
+  /* Procedure squares */
+  .proc-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(150px,1fr));gap:12px;}
+  .proc-card{
+    background:var(--card-alt);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:16px 16px 14px;
+  }
+  .proc-card .name{font-size:11.5px;color:var(--text-soft);margin-bottom:10px;min-height:30px;}
+  .proc-card .qty{font-size:26px;font-weight:800;color:var(--teal);line-height:1;}
+  .proc-card .qty-label{font-size:11px;color:var(--text-soft);margin-top:2px;}
+  .proc-card .growth{margin-top:12px;}
+
+  /* Goals / bars */
+  .goal{margin-bottom:22px;}
+  .goal:last-child{margin-bottom:0;}
+  .goal-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+  .goal-top .gname{font-size:14px;font-weight:700;}
+  .goal-top .gnum{font-size:13px;color:var(--text-soft);}
+  .goal-top .gnum strong{color:var(--text);font-weight:700;}
+  .goal-bar{height:9px;background:var(--card-alt);border-radius:100px;overflow:hidden;border:1px solid var(--border);}
+  .goal-fill{height:100%;background:var(--blue);border-radius:100px;}
+  .goal-fill.short{background:var(--red);}
+  .goal-fill.met{background:var(--green);}
+  .goal-note{font-size:12px;color:var(--text-soft);margin-top:6px;}
+
+  /* Pie chart */
+  .pie-wrap{display:flex;gap:36px;align-items:center;flex-wrap:wrap;}
+  .chart-box{width:210px;height:210px;position:relative;flex-shrink:0;}
+  .legend{display:flex;flex-direction:column;gap:10px;min-width:0;flex:1;}
+  .legend-row{display:flex;align-items:center;gap:10px;font-size:13px;}
+  .legend-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0;}
+  .legend-row .lname{flex:1;min-width:0;color:var(--text);}
+  .legend-row .lval{color:var(--text-soft);font-variant-numeric:tabular-nums;flex-shrink:0;}
+  .legend-row .lpct{width:44px;text-align:right;font-weight:700;color:var(--text);flex-shrink:0;}
+
+  /* Commission */
+  .comm-summary{font-size:13px;color:var(--text-soft);margin-bottom:20px;}
+  .comm-summary strong{color:var(--text);}
+  .comm-tier-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+  .comm-tier-row .tname{font-size:14px;font-weight:700;}
+  .comm-tier-row .tamount{font-size:13px;font-weight:700;color:var(--blue);}
+  .comm-note{font-size:12px;color:var(--text-soft);margin-top:6px;}
+  .comm-pending{
+    background:var(--card-alt);
+    border:1px dashed var(--border);
+    border-radius:8px;
+    padding:16px 18px;
+    font-size:13px;
+    color:var(--text-soft);
+  }
+  .comm-total-row{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-top:22px;padding-top:18px;border-top:1px solid var(--border);
+  }
+  .comm-total-row .label{font-size:14px;font-weight:600;color:var(--text-soft);}
+  .comm-total-row .amount{font-size:28px;font-weight:800;color:var(--green);}
+  .comm-links{margin-top:18px;display:flex;gap:20px;flex-wrap:wrap;}
+  .comm-links a{font-size:13px;color:var(--blue);text-decoration:none;font-weight:600;}
+  .comm-links a:hover{text-decoration:underline;}
+
+  footer{
+    padding-top:16px;
+    font-size:12px;
+    color:var(--text-soft);
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  }
+
+  @media (max-width:760px){
+    .legend{width:100%;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo-mark"></div>
+    <div>
+      <p class="title">Painel de Vendas — CS</p>
+      <p class="subtitle">Clínica Aspekto · Faturamento e metas da equipe</p>
+    </div>
+  </header>
+
+  <div class="month-tabs" id="monthTabs"></div>
+
+  <div id="content"><div class="loading">Carregando dados salvos…</div></div>
+
+  <footer>
+    <span>Relatório de Vendas — Base: extração interna</span>
+    <span id="genDate"></span>
+  </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const REVIEWS_URL = 'https://helenahaddad.github.io/avaliacoes-aspekto/';
+const RULES_URL = 'https://docs.google.com/document/d/18RsiUWgNKtxobasXfvqpSoM04Xp-54CmKqG0igBHJcY/edit?usp=sharing';
+
+const GOALS = { limpeza: 100, arcada: 10, hofPatients: 3 };
+
+// ---- Seed data (only written once, if storage is empty) ----
+const SEED = {
+  '2026-07': {
+    label: 'Julho/2026',
+    revenue: 22715.00,
+    goalsActual: { limpeza: 23, arcada: 0, hofPatients: 7 },
+    categories: [
+      { key: 'limpeza', name: 'Limpeza', value: 5690.00, qty: 23, unit: 'unidades' },
+      { key: 'placa', name: 'Placa de Bruxismo', value: 2925.00, qty: 5, unit: 'unidades' },
+      { key: 'lentes', name: 'Lentes de Contato (individuais)', value: 6100.00, qty: 4, unit: 'unidades' },
+      { key: 'hof', name: 'HOF (Botox, Ácido Hialurônico, Fios)', value: 8000.00, qty: 7, unit: 'pacientes' },
+    ],
+    commission: null,
+  },
+  '2026-08': {
+    label: 'Agosto/2026',
+    revenue: 27131.00,
+    goalsActual: { limpeza: 20, arcada: 2, hofPatients: 1 },
+    categories: [
+      { key: 'arcada', name: 'Arcada', value: 9700.00, qty: 2, unit: 'unidades' },
+      { key: 'hof', name: 'HOF (Botox, Ácido Hialurônico, Fios)', value: 6500.00, qty: 1, unit: 'paciente' },
+      { key: 'limpeza', name: 'Limpeza', value: 4900.00, qty: 20, unit: 'unidades' },
+      { key: 'placa', name: 'Placa de Bruxismo', value: 2670.00, qty: 5, unit: 'unidades' },
+      { key: 'lentes', name: 'Lentes de Contato (individuais)', value: 2500.00, qty: 4, unit: 'unidades' },
+      { key: 'coroa', name: 'Coroa de Cerâmica (E.Max)', value: 800.00, qty: 1, unit: 'unidade' },
+      { key: 'lentesExterno', name: 'Lentes externo (laboratório)', value: 61.00, qty: 1, unit: 'unidade' },
+    ],
+    commission: {
+      tierLabel: 'Meta 1 — até 45 avaliações líquidas',
+      tierPct: 0.30,
+      netReviews: 36,
+      photoBonusPct: 0,
+      photoBonusAmount: 0,
+      writingBonusUnlocked: false,
+      writingBonusAmount: 100,
+    },
+  },
+};
+
+const PALETTE = ['#4C8DFF', '#F5A623', '#2DD4C8', '#8B5CF6', '#22C58B', '#E5484D', '#8A93A3', '#5B6470'];
+
+let monthsData = {};
+let activeMonthKey = null;
+let chartInstance = null;
+
+function brl(v){
+  return 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function pctStr(v){
+  return v.toFixed(1).replace('.', ',') + '%';
+}
+function growthPill(curr, prev){
+  if (prev === undefined || prev === null) return '<span class="pill flat">Novo</span>';
+  if (prev === 0 && curr === 0) return '<span class="pill flat">— 0,0%</span>';
+  if (prev === 0) return '<span class="pill up">Novo neste mês</span>';
+  const g = ((curr - prev) / prev) * 100;
+  if (Math.abs(g) < 0.05) return '<span class="pill flat">— 0,0%</span>';
+  const cls = g > 0 ? 'up' : 'down';
+  const arrow = g > 0 ? '↑' : '↓';
+  return `<span class="pill ${cls}">${arrow} ${pctStr(Math.abs(g))}</span>`;
+}
+
+async function loadAllMonths(){
+  try {
+    for (const [dateKey, data] of Object.entries(SEED)){
+      await window.storage.set('sales:' + dateKey, JSON.stringify(data), false);
+    }
+  } catch(e){ console.error('seed upsert failed', e); }
+
+  const result = {};
+  try {
+    const list = await window.storage.list('sales:', false);
+    const keys = (list && list.keys) ? list.keys : Object.keys(SEED).map(k => 'sales:' + k);
+    for (const k of keys){
+      try {
+        const got = await window.storage.get(k, false);
+        if (got && got.value){
+          result[k.replace('sales:', '')] = JSON.parse(got.value);
+        }
+      } catch(e){}
+    }
+  } catch(e){
+    Object.assign(result, SEED);
+  }
+  if (Object.keys(result).length === 0) Object.assign(result, SEED);
+  return result;
+}
+
+function sortedMonthKeys(){ return Object.keys(monthsData).sort(); }
+function prevMonthKey(key){
+  const keys = sortedMonthKeys();
+  const idx = keys.indexOf(key);
+  return idx > 0 ? keys[idx - 1] : null;
+}
+function findCategory(cats, key){ return cats.find(c => c.key === key); }
+
+function renderTabs(){
+  const tabsEl = document.getElementById('monthTabs');
+  tabsEl.innerHTML = '';
+  sortedMonthKeys().forEach(key => {
+    const btn = document.createElement('button');
+    btn.className = 'month-tab' + (key === activeMonthKey ? ' active' : '');
+    btn.textContent = monthsData[key].label;
+    btn.onclick = () => { activeMonthKey = key; renderTabs(); renderContent(); };
+    tabsEl.appendChild(btn);
+  });
+}
+
+function renderContent(){
+  const month = monthsData[activeMonthKey];
+  const prevKey = prevMonthKey(activeMonthKey);
+  const prev = prevKey ? monthsData[prevKey] : null;
+  const monthName = month.label.split('/')[0].toLowerCase();
+
+  const revenueGrowth = prev ? ((month.revenue - prev.revenue) / prev.revenue) * 100 : null;
+  const ticketMedio = month.revenue / month.categories.reduce((s,c) => s + c.qty, 0);
+
+  const content = document.getElementById('content');
+  content.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card" style="--accent:var(--blue)">
+        <div class="eyebrow">Faturamento — ${monthName}</div>
+        <div class="value">${brl(month.revenue)}</div>
+        ${revenueGrowth !== null ? `<div>${growthPill(month.revenue, prev.revenue)}</div><div class="note">vs. ${brl(prev.revenue)} em ${prev.label.split('/')[0].toLowerCase()}</div>` : `<div class="note">Sem mês anterior para comparar</div>`}
+      </div>
+      <div class="stat-card" style="--accent:var(--teal)">
+        <div class="eyebrow">Ticket médio</div>
+        <div class="value">${brl(ticketMedio)}</div>
+        <div class="note">por procedimento vendido</div>
+      </div>
+      <div class="stat-card" style="--accent:var(--orange)">
+        <div class="eyebrow">Procedimentos vendidos</div>
+        <div class="value">${month.categories.reduce((s,c) => s + c.qty, 0)}</div>
+        <div class="note">unidades / pacientes no mês</div>
+      </div>
+      <div class="stat-card" style="--accent:var(--green)" id="commStatCard"></div>
+    </div>
+
+    <section>
+      <h2>Procedimentos vendidos</h2>
+      <p class="section-sub">Quantidade (ou pacientes, no caso de HOF) por tipo${prev ? ' e variação frente ao mês anterior' : ''}</p>
+      <div class="proc-grid" id="procGrid"></div>
+    </section>
+
+    <section>
+      <h2>Metas do mês</h2>
+      <p class="section-sub">Quantidade vendida frente à meta mensal</p>
+      <div id="goalsBlock"></div>
+    </section>
+
+    <section>
+      <h2>Faturamento por procedimento</h2>
+      <p class="section-sub">Participação de cada serviço no total de ${monthName}</p>
+      <div class="pie-wrap">
+        <div class="chart-box"><canvas id="revenueChart"></canvas></div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Comissionamento da equipe — ${monthName}</h2>
+      <p class="section-sub">Faixa e bônus com base nas avaliações 5★ líquidas do painel do Google</p>
+      <div id="commissionBlock"></div>
+    </section>
+  `;
+
+  // Procedure cards (excludes minor/one-off items — they still count in revenue & pie chart)
+  const CARD_EXCLUDE = ['lentes', 'coroa', 'lentesExterno'];
+  const procGrid = document.getElementById('procGrid');
+  month.categories.filter(cat => !CARD_EXCLUDE.includes(cat.key)).forEach(cat => {
+    const prevCat = prev ? findCategory(prev.categories, cat.key) : undefined;
+    const prevQty = prevCat ? prevCat.qty : (prev ? 0 : undefined);
+    const card = document.createElement('div');
+    card.className = 'proc-card';
+    card.innerHTML = `
+      <div class="name">${cat.name}</div>
+      <div class="qty">${cat.qty}</div>
+      <div class="qty-label">${cat.unit}</div>
+      <div class="growth">${growthPill(cat.qty, prevQty)}</div>
+    `;
+    procGrid.appendChild(card);
+  });
+
+  // Goals
+  const goalsBlock = document.getElementById('goalsBlock');
+  const goalDefs = [
+    { name: 'Limpeza', actual: month.goalsActual.limpeza, target: GOALS.limpeza, unit: '' },
+    { name: 'Arcada', actual: month.goalsActual.arcada, target: GOALS.arcada, unit: '' },
+    { name: 'HOF', actual: month.goalsActual.hofPatients, target: GOALS.hofPatients, unit: ' pacientes' },
+  ];
+  goalDefs.forEach(g => {
+    const p = Math.min(100, (g.actual / g.target) * 100);
+    const met = g.actual >= g.target;
+    let note = `${Math.round(p)}% da meta mensal atingido`;
+    if (prev){
+      const prevActual = g.name === 'Limpeza' ? prev.goalsActual.limpeza : g.name === 'Arcada' ? prev.goalsActual.arcada : prev.goalsActual.hofPatients;
+      note += ` · mês anterior: ${prevActual}`;
+    }
+    const row = document.createElement('div');
+    row.className = 'goal';
+    row.innerHTML = `
+      <div class="goal-top">
+        <span class="gname">${g.name}</span>
+        <span class="gnum"><strong>${g.actual}</strong> / ${g.target}${g.unit}</span>
+      </div>
+      <div class="goal-bar"><div class="goal-fill ${met ? 'met' : 'short'}" style="width:${p}%"></div></div>
+      <div class="goal-note">${note}</div>
+    `;
+    goalsBlock.appendChild(row);
+  });
+
+  // Pie chart
+  const total = month.categories.reduce((s, c) => s + c.value, 0);
+  const sortedCats = [...month.categories].sort((a,b) => b.value - a.value);
+  const colored = sortedCats.map((c, i) => ({...c, color: PALETTE[i % PALETTE.length]}));
+
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(document.getElementById('revenueChart'), {
+    type: 'doughnut',
+    data: {
+      labels: colored.map(c => c.name),
+      datasets: [{
+        data: colored.map(c => c.value),
+        backgroundColor: colored.map(c => c.color),
+        borderColor: '#12161D',
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '58%',
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  const legend = document.getElementById('legend');
+  colored.forEach(c => {
+    const p = (c.value / total) * 100;
+    const row = document.createElement('div');
+    row.className = 'legend-row';
+    row.innerHTML = `
+      <span class="legend-dot" style="background:${c.color}"></span>
+      <span class="lname">${c.name}</span>
+      <span class="lval">${brl(c.value)}</span>
+      <span class="lpct">${pctStr(p)}</span>
+    `;
+    legend.appendChild(row);
+  });
+
+  // Commission
+  const base = month.revenue * 0.03;
+  const commBlock = document.getElementById('commissionBlock');
+  const commCard = document.getElementById('commStatCard');
+
+  if (!month.commission){
+    commCard.innerHTML = `
+      <div class="eyebrow">Comissão — ${monthName}</div>
+      <div class="value" style="font-size:16px;color:var(--text-soft)">Pendente</div>
+      <div class="note">Sem dados de avaliações para este mês</div>
+    `;
+    commBlock.innerHTML = `
+      <div class="comm-pending">
+        Ainda não temos os dados do painel de avaliações do Google para ${monthName} — sem eles não é possível calcular a faixa de comissão nem os bônus de qualidade com precisão. Assim que tiver o print desse mês, me manda que eu calculo certinho.
+      </div>
+      <div class="comm-links">
+        <a href="${REVIEWS_URL}" target="_blank" rel="noopener">Ver painel de avaliações no Google →</a>
+        <a href="${RULES_URL}" target="_blank" rel="noopener">Regras de comissionamento →</a>
+      </div>
+    `;
+  } else {
+    const c = month.commission;
+    const tierAmount = base * c.tierPct;
+    const totalBonus = (c.writingBonusUnlocked ? c.writingBonusAmount : 0) + (c.photoBonusAmount || 0);
+    const totalComm = tierAmount + totalBonus;
+
+    commCard.innerHTML = `
+      <div class="eyebrow">Comissão — ${monthName}</div>
+      <div class="value">${brl(totalComm)}</div>
+      <div class="note">${Math.round(c.tierPct*100)}% da comissão · ${c.netReviews} avaliações 5★ líquidas</div>
+    `;
+
+    commBlock.innerHTML = `
+      <div class="comm-summary">Comissão cheia (3% sobre ${brl(month.revenue)}): <strong>${brl(base)}</strong> · faixa atingida: <strong>${c.tierLabel}</strong></div>
+
+      <div class="comm-tier-row">
+        <span class="tname">${Math.round(c.tierPct*100)}% da comissão liberado</span>
+        <span class="tamount">${brl(tierAmount)}</span>
+      </div>
+      <div class="goal-bar"><div class="goal-fill met" style="width:${c.tierPct*100}%"></div></div>
+      <div class="comm-note">${c.netReviews} avaliações 5★ líquidas no período</div>
+
+      <div class="comm-tier-row" style="margin-top:22px;">
+        <span class="tname">Bônus por avaliações com foto</span>
+        <span class="tamount" style="color:${c.photoBonusAmount > 0 ? 'var(--green)' : 'var(--text-soft)'}">+ ${brl(c.photoBonusAmount || 0)}</span>
+      </div>
+      <div class="goal-bar"><div class="goal-fill ${c.photoBonusPct > 0 ? 'met' : 'short'}" style="width:${c.photoBonusPct}%"></div></div>
+      <div class="comm-note">${c.photoBonusPct}% das avaliações líquidas com foto</div>
+
+      <div class="comm-tier-row" style="margin-top:22px;">
+        <span class="tname">Bônus por avaliações com escrita (meta &gt; 60%)</span>
+        <span class="tamount" style="color:${c.writingBonusUnlocked ? 'var(--green)' : 'var(--text-soft)'}">+ ${brl(c.writingBonusUnlocked ? c.writingBonusAmount : 0)}</span>
+      </div>
+      <div class="comm-note">${c.writingBonusUnlocked ? 'Meta de escrita atingida' : 'Ainda não atingida neste período'}</div>
+
+      <div class="comm-total-row">
+        <span class="label">Total a receber pelo time</span>
+        <span class="amount">${brl(totalComm)}</span>
+      </div>
+
+      <div class="comm-links">
+        <a href="${REVIEWS_URL}" target="_blank" rel="noopener">Ver painel de avaliações no Google →</a>
+        <a href="${RULES_URL}" target="_blank" rel="noopener">Regras de comissionamento →</a>
+      </div>
+    `;
+  }
+}
+
+(async function init(){
+  monthsData = await loadAllMonths();
+  const keys = sortedMonthKeys();
+  activeMonthKey = keys[keys.length - 1];
+  renderTabs();
+  renderContent();
+  document.getElementById('genDate').textContent = 'Atualizado em ' + new Date().toLocaleDateString('pt-BR');
+})();
+</script>
+</body>
+</html>
